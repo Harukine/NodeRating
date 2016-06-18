@@ -4,6 +4,7 @@
 #include <cstring>
 #include <sstream>
 #include <iterator>
+#include <map>
 
 using namespace std;
 
@@ -17,26 +18,26 @@ enum Entity : int
 class Edge
 {
 public:
-	Edge(short from, short to, short comm_chan)
+	Edge(int from, int to, int comm_chan)
 	{
 		_from = from;
 		_to = to;
 		_comm_chan = comm_chan;
 	}
-	short int _from; // index of start edge
-	short int _to; // index of end edge
-	short int _comm_chan; // communication channel
+	int _from; // index of start edge
+	int _to; // index of end edge
+	int _comm_chan; // communication channel
 
 };
-
 class Node
 {
 public:
-	short int id;   // id of node
-	string type;  // institution type of node
-	short int edges; // edges of the node
-	double rating; // rate of the node
-
+	Node(int key, int inst_type){
+		_key = key;
+		_inst_type = inst_type;
+	}
+	int _key;   // key of node
+	int _inst_type;  // institution type of node
 };
 
 class NodeSet
@@ -47,9 +48,26 @@ public:
 
 };
 
+Node nodeParsed(string line){
+	int key, inst_type;
+	string inst;
+	istringstream iss(line);
+	iss >> key;
+	iss >> inst;
+	if (inst == "Dealer"){
+		inst_type = 1;
+	} else if (inst == "Investor") {
+		inst_type = 2;
+	} else if (inst == "Issuer") {
+		inst_type = 3;
+	} else {
+		inst_type = 0;
+	}
+	return Node(key, inst_type);
+}
 Edge edgeParsed(string line){
 	char type;
-	short int from, to, cost;
+	int from, to, cost;
 	string comm;
 	istringstream iss(line);
 	iss >> type;
@@ -70,24 +88,41 @@ Edge edgeParsed(string line){
 
 int main() {
 
-	char data;
-	int count;
+	map<int, int> world_nodes;
 	ifstream nodes_world ("nodes_world.txt"), edges_world ("edges_world.clq");
 	ofstream result;
 	string line;
 
+	/**
+	 * Reads all nodes from text and adds it to a map
+	 */
+	if(nodes_world.is_open())
+	{
+		while ( getline (nodes_world, line) )
+		{
+			Node curNode = nodeParsed(line);
+			world_nodes[curNode._key] = curNode._inst_type;
+		}
+	}
+	else cout << "Unable to open file" << endl;
+	nodes_world.close();
+
+	/**
+	 * Reads all the edges and sorts it
+	 */
 	if (edges_world.is_open())
 	{
 		getline (edges_world, line);
 		while ( getline (edges_world, line) )
 		{
 			Edge curEdge = edgeParsed(line);
-			cout << curEdge._from << curEdge._to << curEdge._comm_chan << endl;
+//			cout << curEdge._from << curEdge._to << curEdge._comm_chan << endl;
 		}
 	}
 	else cout << "Unable to open file, incorrect directory" << endl;
+	edges_world.close();
 
-
+	cout << world_nodes.size();
 
 	return 0;
 }
